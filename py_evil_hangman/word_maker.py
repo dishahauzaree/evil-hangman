@@ -75,27 +75,30 @@ class WordMakerAI():
         self.verbose = verbose
 
         # Use this code if you like.
-        """
+        self.words = {}
         with open(words_file) as file_obj:
             for line in file_obj:
                 word = line.strip()
                 # Use word
-        """
-
-        pass # TODO: implement this
+                if len(word) > 0:
+                    if len(word) in self.words:
+                        self.words[len(word)].append(word)
+                    else:
+                        self.words[len(word)] = [word]
+    
 
     def reset(self, word_length: int) -> None:
         # This function starts a new game with a word length of `word_length`. This will always be called before guess() or get_valid_word() are called.
         # You should try to make this function should be O(1). That is, you shouldn't have to process over the entire dictionary here (find somewhere else to preprocess it)
         # Your AI code should not call input() or print().
-
-        pass # TODO: implement this
+        self.active = self.words.get(word_length, [])
 
     def get_valid_word(self) -> str:
         # Get a valid word in the active dictionary, to return when you lose
         # Can return any word, as long as it satisfies the previous guesses
-
-        pass # TODO: implement this
+        if not self.active:
+            return ""
+        return self.active[0]
 
     def get_amount_of_valid_words(self) -> int:
         # This function gets the total amount of possible words "remaining" (i.e., that satisfy all the guesses since self.reset was last called)
@@ -103,8 +106,8 @@ class WordMakerAI():
         # Note: This is used extensively in the autograder! Be sure to verify that this function works
         # via the provided test cases.
         # You can see this number by running with the verbose flag, i.e. `python3 evil_hangman.py --verbose`
-
-        pass # TODO: implement this
+        return len(self.active)
+        
 
     def get_letter_positions_in_word(self, word: str, guess_letter: str) -> tuple[int, ...]:
         # This function should return the positions of guess_letter in word. For instance:
@@ -114,7 +117,10 @@ class WordMakerAI():
 
         # Note: to convert from a list to a tuple, call tuple() on the list. For instance:
         result = []
-        # TODO: add letter positions to result
+        for i in range(len(word)):
+            if word[i] == guess_letter:
+                result.append(i)
+            
         return tuple(result)
         
 
@@ -143,4 +149,14 @@ class WordMakerAI():
         # The order of the returned list should be sorted. You can assume that 'guess_letter' has not been seen yet since the last call to self.reset(),
         #  and that guess_letter has len of 1 and is a lowercase a-z letter.
         
-        pass # TODO: implement this
+        families = defaultdict(list)
+        for word in self.active:
+            key = self.get_letter_positions_in_word(word, guess_letter)
+            families[key].append(word)
+
+        if not families:
+            return []
+
+        best = max(families, key=lambda k: (len(families[k]), -len(k)))
+        self.active = families[best]
+        return list(best)
